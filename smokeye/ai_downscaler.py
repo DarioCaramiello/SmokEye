@@ -126,6 +126,7 @@ def main() -> None:
     downscaler.main(
         weight_builder=build_ai_weights,
         raster_tag_builder=ai_raster_tags,
+        method_name="ai",
     )
 
 

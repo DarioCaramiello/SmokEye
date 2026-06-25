@@ -23,19 +23,19 @@ mkdir -p output/comparison
 Inspect the target grid:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py --inspect-geodat data/geo.dat
+python downscale_pollutant.py --inspect-geodat data/geo.dat
 ```
 
 Inspect CALMET records:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py --inspect-calmet data/cmet.dat
+python downscale_pollutant.py --inspect-calmet data/cmet.dat
 ```
 
 Inspect stations and background estimate:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py \
+python downscale_pollutant.py \
   --pollutant NO2 \
   --inspect-groundtruth data/groundtruth.csv
 ```
@@ -52,7 +52,7 @@ data/groundtruth.csv
 ## 3. Run Deterministic Downscaling
 
 ```bash
-python downscale_pollutant_geodat_calmet.py \
+python downscale_pollutant.py \
   data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
   data/cmet.dat \
   data/geo.dat \
@@ -69,10 +69,10 @@ python downscale_pollutant_geodat_calmet.py \
 
 ## 4. Run AI Downscaling
 
-Use the same input files and the same flags. Change only the script name and output paths:
+Use the same input files and the same flags. Change only `--method` and output paths:
 
 ```bash
-python downscale_pollutant_geodat_calmet_ai.py \
+python downscale_pollutant.py --method ai \
   data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
   data/cmet.dat \
   data/geo.dat \
@@ -192,7 +192,7 @@ To compare only the conservative allocation stage without visual smoothing, run 
 Example deterministic strict run:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py \
+python downscale_pollutant.py \
   data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
   data/cmet.dat \
   data/geo.dat \
@@ -211,7 +211,7 @@ python downscale_pollutant_geodat_calmet.py \
 Example AI strict run:
 
 ```bash
-python downscale_pollutant_geodat_calmet_ai.py \
+python downscale_pollutant.py --method ai \
   data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
   data/cmet.dat \
   data/geo.dat \

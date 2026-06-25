@@ -1,6 +1,6 @@
 # Input Data Requirements
 
-Both downscaling scripts use the same input files and command-line interface.
+Both downscaling methods use the same input files and command-line interface.
 
 ## Positional Inputs
 
@@ -10,7 +10,7 @@ input_tif calmet_dat geodat output_tif
 
 ### `input_tif`
 
-Input pollutant GeoTIFF. The scripts read one 1-based band selected with `--input-band`.
+Input pollutant GeoTIFF. The command reads one 1-based band selected with `--input-band`.
 
 Requirements:
 
@@ -116,21 +116,21 @@ Column matching is case-insensitive. For pollutants other than `NO2`, either nam
 Inspect the target grid:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py --inspect-geodat data/geo.dat
+python downscale_pollutant.py --inspect-geodat data/geo.dat
 ```
 
 Inspect CALMET records:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py --inspect-calmet data/cmet.dat
+python downscale_pollutant.py --inspect-calmet data/cmet.dat
 ```
 
 Inspect station CSV and estimate background:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py \
+python downscale_pollutant.py \
   --pollutant NO2 \
   --inspect-groundtruth examples/groundtruth_example.csv
 ```
 
-The AI script supports the same inspection commands.
+The AI method supports the same inspection commands by adding `--method ai`.

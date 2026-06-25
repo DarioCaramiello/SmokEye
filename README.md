@@ -1,17 +1,17 @@
 # SmokEye Pollutant Downscaler
 
-SmokEye provides two comparable workflows for downscaling a gridded pollutant raster to the grid defined by a CALMET `GEO.DAT` file:
+SmokEye provides one command with two comparable workflows for downscaling a gridded pollutant raster to the grid defined by a CALMET `GEO.DAT` file:
 
-- `downscale_pollutant_geodat_calmet.py`: deterministic dynamic downscaling with conservative allocation.
-- `downscale_pollutant_geodat_calmet_ai.py`: AI-based dynamic downscaling with the same input interface and the same output products.
+- `python downscale_pollutant.py --method deterministic`: deterministic dynamic downscaling with conservative allocation.
+- `python downscale_pollutant.py --method ai`: AI-based dynamic downscaling with the same input interface and the same output products.
 
-Both scripts read the same pollutant raster, CALMET/CMET meteorology, `GEO.DAT` target grid, and optional station CSV. Both write a single-band GeoTIFF aligned to the `GEO.DAT` grid, plus optional diagnostic rasters and JSON reports. This makes the two methods suitable for direct side-by-side comparison.
+Both methods read the same pollutant raster, CALMET/CMET meteorology, `GEO.DAT` target grid, and optional station CSV. Both write a single-band GeoTIFF aligned to the `GEO.DAT` grid, plus optional diagnostic rasters and JSON reports. This makes the two methods suitable for direct side-by-side comparison.
 
-The script names are stable compatibility entry points. Shared implementation lives in the `smokeye` package so deterministic and AI workflows do not duplicate parsing, I/O, conservative allocation, station correction, validation, or raster writing code.
+The top-level script is a thin compatibility entry point. Shared implementation lives in the `smokeye` package so deterministic and AI workflows do not duplicate parsing, I/O, conservative allocation, station correction, validation, or raster writing code.
 
 ## What The Workflow Does
 
-The scripts do not simply resample the source raster. They treat each source pixel value as a coarse observational constraint and distribute it over the finer CALMET grid using a weight field. The allocation is conservative before optional seamless/deblocking regularization:
+The command does not simply resample the source raster. It treats each source pixel value as a coarse observational constraint and distributes it over the finer CALMET grid using a weight field. The allocation is conservative before optional seamless/deblocking regularization:
 
 ```text
 fine_i = source_P * w_i * sum(A_iP) / sum(w_i * A_iP)
@@ -19,7 +19,7 @@ fine_i = source_P * w_i * sum(A_iP) / sum(w_i * A_iP)
 
 where `w_i` is the fine-grid weight and `A_iP` is the overlap area between fine cell `i` and source pixel `P`.
 
-The deterministic script builds `w_i` from explicit terrain, land-use, and meteorological rules. The AI script builds `w_i` using a deterministic machine-learning model while preserving the same downstream allocation, station-correction, reporting, and validation behavior.
+The deterministic method builds `w_i` from explicit terrain, land-use, and meteorological rules. The AI method builds `w_i` using a deterministic machine-learning model while preserving the same downstream allocation, station-correction, reporting, and validation behavior.
 
 ## Installation
 
@@ -41,13 +41,13 @@ conda activate smokeye
 Inspect the target grid:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py --inspect-geodat data/geo.dat
+python downscale_pollutant.py --inspect-geodat data/geo.dat
 ```
 
 Run deterministic downscaling:
 
 ```bash
-python downscale_pollutant_geodat_calmet.py \
+python downscale_pollutant.py \
   data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
   data/cmet.dat \
   data/geo.dat \
@@ -65,7 +65,7 @@ python downscale_pollutant_geodat_calmet.py \
 Run AI downscaling with the same interface:
 
 ```bash
-python downscale_pollutant_geodat_calmet_ai.py \
+python downscale_pollutant.py --method ai \
   data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
   data/cmet.dat \
   data/geo.dat \
@@ -93,10 +93,10 @@ python downscale_pollutant_geodat_calmet_ai.py \
 
 ```text
 SmokEye/
-├── downscale_pollutant_geodat_calmet.py
-├── downscale_pollutant_geodat_calmet_ai.py
+├── downscale_pollutant.py
 ├── smokeye/
 │   ├── __init__.py
+│   ├── cli.py
 │   ├── downscaler.py
 │   └── ai_downscaler.py
 ├── requirements.txt
@@ -120,8 +120,9 @@ SmokEye/
 
 ## Development Notes
 
-- Keep command-line compatibility in the two top-level scripts. They should remain thin wrappers.
+- Keep `downscale_pollutant.py` as a thin command-line wrapper.
 - Put shared behavior in `smokeye/downscaler.py`.
+- Put unified CLI dispatch in `smokeye/cli.py`.
 - Put AI-specific weight-model behavior in `smokeye/ai_downscaler.py`.
 - Do not duplicate source code between deterministic and AI workflows; add strategy hooks to the shared workflow when methods need to differ.
 

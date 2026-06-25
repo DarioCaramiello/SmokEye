@@ -9,12 +9,12 @@ Both methods use the same conservative allocation engine after the weight field 
 
 ## Implementation Layout
 
-The two top-level scripts are compatibility entry points:
+The single top-level script is a compatibility entry point:
 
-- `downscale_pollutant_geodat_calmet.py` calls the shared deterministic workflow.
-- `downscale_pollutant_geodat_calmet_ai.py` calls the shared workflow with the AI weight builder.
+- `downscale_pollutant.py` defaults to the shared deterministic workflow.
+- `downscale_pollutant.py --method ai` calls the shared workflow with the AI weight builder.
 
-Shared readers, allocation, station correction, validation, deblocking, and raster writers live in `smokeye/downscaler.py`. The AI-only weight strategy lives in `smokeye/ai_downscaler.py`. This keeps method differences explicit while avoiding duplicate source code.
+Unified method dispatch lives in `smokeye/cli.py`. Shared readers, allocation, station correction, validation, deblocking, and raster writers live in `smokeye/downscaler.py`. The AI-only weight strategy lives in `smokeye/ai_downscaler.py`. This keeps method differences explicit while avoiding duplicate source code.
 
 ## Processing Stages
 
@@ -30,17 +30,17 @@ Shared readers, allocation, station correction, validation, deblocking, and rast
 
 ## Shared Command-Line Contract
 
-Both scripts accept the same positional arguments:
+The command accepts the same positional arguments for both methods:
 
 ```text
 input_tif calmet_dat geodat output_tif
 ```
 
-Both scripts also accept the same flags for pollutant selection, station correction, validation, deblocking, diagnostics, and inspection modes. This is deliberate: a deterministic run and an AI run can be produced by changing only the script name and output paths.
+Both methods also accept the same flags for pollutant selection, station correction, validation, deblocking, diagnostics, and inspection modes. This is deliberate: a deterministic run and an AI run can be produced by changing only `--method` and output paths.
 
 ## Conservation Behavior
 
-The conservative allocation stage preserves the source field at coarse-pixel scale before optional regularization. When `--validate` is used, the scripts report:
+The conservative allocation stage preserves the source field at coarse-pixel scale before optional regularization. When `--validate` is used, the command reports:
 
 - `conservative_allocation`: validation of the exact allocation before regularization.
 - `written_regularized_output`: validation of the final written output after seamless/deblocking regularization.

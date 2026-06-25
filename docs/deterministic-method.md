@@ -1,14 +1,14 @@
 # Deterministic Method
 
-The deterministic script is:
+The deterministic method is the default mode:
 
 ```text
-downscale_pollutant_geodat_calmet.py
+downscale_pollutant.py --method deterministic
 ```
 
 It builds the fine-grid allocation weight from explicit rules. The resulting field is then used by the shared conservative allocation engine.
 
-The entry-point script delegates to `smokeye/downscaler.py`, where the deterministic `build_weights` strategy and the shared workflow are implemented.
+The entry-point script delegates through `smokeye/cli.py` to `smokeye/downscaler.py`, where the deterministic `build_weights` strategy and the shared workflow are implemented.
 
 ## Weight Components
 
@@ -61,7 +61,7 @@ Use direct ratios with:
 ## Example
 
 ```bash
-python downscale_pollutant_geodat_calmet.py \
+python downscale_pollutant.py \
   data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
   data/cmet.dat \
   data/geo.dat \

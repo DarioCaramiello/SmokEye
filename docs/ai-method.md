@@ -1,14 +1,14 @@
 # AI Method
 
-The AI script is:
+The AI method is selected with:
 
 ```text
-downscale_pollutant_geodat_calmet_ai.py
+downscale_pollutant.py --method ai
 ```
 
-It has the same command-line interface and writes the same output types as the deterministic script. The main difference is how the fine-grid dynamic weight field is produced.
+It has the same command-line interface and writes the same output types as the deterministic method. The main difference is how the fine-grid dynamic weight field is produced.
 
-The entry-point script delegates to `smokeye/ai_downscaler.py`, which provides the AI weight strategy to the shared workflow in `smokeye/downscaler.py`. The shared workflow owns argument parsing, readers, allocation, station correction, validation, deblocking, and output writing.
+The entry-point script delegates through `smokeye/cli.py` to `smokeye/ai_downscaler.py`, which provides the AI weight strategy to the shared workflow in `smokeye/downscaler.py`. The shared workflow owns argument parsing, readers, allocation, station correction, validation, deblocking, and output writing.
 
 ## Model Type
 
@@ -44,7 +44,7 @@ Station correction, conservative allocation, seamless/deblocking regularization,
 ## Example
 
 ```bash
-python downscale_pollutant_geodat_calmet_ai.py \
+python downscale_pollutant.py --method ai \
   data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
   data/cmet.dat \
   data/geo.dat \
@@ -59,7 +59,7 @@ python downscale_pollutant_geodat_calmet_ai.py \
   --write-correction output/ai_correction.tif
 ```
 
-During execution, the AI script prints a short model summary like:
+During execution, the AI method prints a short model summary like:
 
 ```text
 AI weight model: features=22 hidden=88 training_cells=10000

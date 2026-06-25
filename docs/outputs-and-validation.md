@@ -1,6 +1,6 @@
 # Outputs, Reports, And Validation
 
-Both downscaling scripts write the same categories of output.
+Both downscaling methods write the same categories of output.
 
 ## Main GeoTIFF
 
@@ -66,7 +66,7 @@ Use:
 --validate
 ```
 
-The scripts recompute coarse-scale means of the fine output inside each source pixel and compare them to the original source pixel values.
+The command recomputes coarse-scale means of the fine output inside each source pixel and compares them to the original source pixel values.
 
 The validation block contains:
 

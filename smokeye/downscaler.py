@@ -1040,9 +1040,18 @@ def identity_raster_tags(tags: dict) -> dict:
     return tags
 
 
+def deterministic_raster_tags(tags: dict) -> dict:
+    out = dict(tags)
+    out.update({"method": "deterministic_conservative_dynamic_downscaling"})
+    return out
+
+
 def main(
     weight_builder: WeightBuilder = build_weights,
-    raster_tag_builder: RasterTagBuilder = identity_raster_tags,
+    raster_tag_builder: RasterTagBuilder = deterministic_raster_tags,
+    method_name: str = "deterministic",
+    argv: Optional[List[str]] = None,
+    include_method_help: bool = False,
 ) -> None:
     parser = argparse.ArgumentParser(
         description="Conservatively downscale a selected pollutant raster band to a CALMET GEO.DAT grid, optionally corrected with air-quality stations."
@@ -1051,6 +1060,8 @@ def main(
     parser.add_argument("calmet_dat", nargs="?", type=Path, help="CALMET/CMET.DAT binary, or NPZ if --met-npz is not used.")
     parser.add_argument("geodat", nargs="?", type=Path, help="CALMET GEO.DAT file.")
     parser.add_argument("output_tif", nargs="?", type=Path, help="Output single-band GeoTIFF.")
+    if include_method_help:
+        parser.add_argument("--method", choices=["deterministic", "ai"], default=method_name, help="Downscaling weight strategy to use.")
     parser.add_argument("--geodat-sidecar", type=Path, default=None, help="Optional grid JSON fallback.")
     parser.add_argument("--met-npz", type=Path, default=None, help="Optional NPZ with pblh/ws10/u10/v10/ustar on GEO.DAT grid.")
     parser.add_argument("--pollutant", default="NO2", help="Pollutant name used for metadata and the default ground-truth value column, e.g. NO2, O3, PM10, PM25, SO2, CO.")
@@ -1085,7 +1096,7 @@ def main(
     parser.add_argument("--inspect-geodat", type=Path, default=None, help="Inspect/infer a GEO.DAT and exit.")
     parser.add_argument("--inspect-calmet", type=Path, default=None, help="List likely gridded CALMET records and exit.")
     parser.add_argument("--inspect-groundtruth", type=Path, default=None, help="Inspect a ground-truth CSV and exit.")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.inspect_geodat:
         grid = GeoDATReader(args.inspect_geodat, args.geodat_sidecar).read()
@@ -1131,6 +1142,7 @@ def main(
     report = {
         "grid": grid.as_dict(),
         "meteorology_fields": sorted(met.keys()),
+        "method": method_name,
         "pollutant": args.pollutant,
         "input_band": args.input_band,
         "groundtruth_used": False,
