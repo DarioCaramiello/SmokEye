@@ -6,7 +6,7 @@ The diffusion method is selected with:
 downscale_pollutant.py --method diffusion
 ```
 
-It uses the same core inputs and outputs as the deterministic and AI methods, but adds a checkpoint-driven residual generation step before writing the final raster.
+It uses the same core inputs and outputs as the deterministic and AI methods, but adds a checkpoint-driven residual generation step before writing the final raster. In scientific use, the checkpoint is part of the method definition: its training data, training strategy, seed policy, and version should be retained with the output provenance.
 
 ## Inference
 
@@ -55,7 +55,7 @@ deterministic conservative field
   -> hard coarse-to-fine conservative normalization
 ```
 
-The final normalization rescales the generated fine-grid values inside each source pollutant pixel footprint so the area-weighted fine mean matches the original coarse pixel value. This hard step is applied after seamless/deblocking and residual generation, so the written diffusion GeoTIFF is the conservation-enforced product.
+The final normalization rescales the generated fine-grid values inside each source pollutant pixel footprint so the area-weighted fine mean matches the original coarse pixel value. This hard step is applied after seamless/deblocking and residual generation, so the written diffusion GeoTIFF is the conservation-enforced product. If an experiment deliberately relaxes this invariant, the relaxation value and validation errors must be reported as a non-conservative diagnostic condition.
 
 ## Lightweight Checkpoints
 
@@ -101,3 +101,7 @@ method=diffusion_conservation_guided_downscaling
 diffusion_model=residual_conditional_diffusion_checkpoint
 conservation=hard_coarse_to_fine_normalization
 ```
+
+## Reporting Guidance
+
+Academic reports should identify the diffusion checkpoint, training strategy, inference seed, sample count, uncertainty or ensemble outputs, and conservation-validation statistics. Diffusion-assisted structure should be interpreted as conditional model-generated fine-scale variability, not as newly observed sub-pixel satellite information.

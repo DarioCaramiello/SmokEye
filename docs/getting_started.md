@@ -2,12 +2,13 @@
 
 This guide introduces a complete SmokEye workflow, from installation to reproducible example runs. It is written for a user who wants to understand not only which commands to execute, but also what each command produces and how to interpret the quality-control outputs.
 
-SmokEye downscales a gridded pollutant raster to a CALMET `GEO.DAT` grid. The command supports two weight-building methods:
+SmokEye downscales a gridded pollutant raster to a CALMET `GEO.DAT` grid. The command supports three method families:
 
 - deterministic: explicit terrain, land-use, and meteorological rules;
-- AI: a deterministic machine-learning weight strategy with the same input and output contract.
+- AI: a deterministic machine-learning weight strategy with the same input and output contract;
+- diffusion: checkpoint-driven residual generation followed by hard coarse-to-fine conservation normalization.
 
-Both methods use the same readers, conservative allocation engine, station correction workflow, validation logic, deblocking logic, and raster writers.
+All methods use the same readers, conservative allocation engine, station correction workflow, validation logic, deblocking logic, and raster writers. This common infrastructure makes method comparisons scientifically interpretable because the command-line contract, target grid, temporal selection, units, diagnostics, and output products remain fixed.
 
 ## 1. Prepare The Software Environment
 
@@ -42,7 +43,7 @@ python downscale_pollutant.py --help
 The help output should include:
 
 ```text
---method {deterministic,ai}
+--method {deterministic,ai,diffusion}
 --pollutant POLLUTANT
 --groundtruth-csv GROUNDTRUTH_CSV
 --validate
@@ -306,7 +307,7 @@ python downscale_pollutant.py --method ai \
   --write-weight output/getting_started/no_groundtruth/ai_weight.tif
 ```
 
-During execution, the AI method prints a short model summary:
+During execution, the AI method emits a short model summary:
 
 ```text
 AI weight model: features=... hidden=... training_cells=...
@@ -314,7 +315,28 @@ AI weight model: features=... hidden=... training_cells=...
 
 The AI method is deterministic. Its random hidden layer uses a fixed seed, so repeated runs with the same inputs produce the same weight field.
 
-## 8. Run Deterministic Downscaling With Ground Truth Correction
+## 8. Run Diffusion Downscaling With An Explicit Checkpoint
+
+The diffusion workflow uses the deterministic conservative field as a physically interpretable baseline, adds checkpoint-driven residual fine-scale structure, and then hard-normalizes the result so each source pollutant pixel footprint aggregates back to the original coarse value. It must be run with an explicit checkpoint; if the checkpoint is omitted, the command fails rather than silently producing deterministic output under a diffusion label.
+
+```bash
+python downscale_pollutant.py --method diffusion \
+  data/S5P_NO2_000_20240628T111519UTC_orbit-unknown.tif \
+  data/cmet.dat \
+  data/geo.dat \
+  output/getting_started/no_groundtruth/diffusion_no2.tif \
+  --pollutant NO2 \
+  --input-band 1 \
+  --diffusion-checkpoint runs/diffusion_hybrid/best.pt \
+  --diffusion-samples 8 \
+  --diffusion-seed 42 \
+  --validate \
+  --write-uncertainty
+```
+
+For academic reporting, record the checkpoint path or identifier, training strategy, seed, number of samples, device, and conservation-validation block. When `--write-uncertainty` or `--write-ensemble` is used, retain those products with the main GeoTIFF because they document realization variability.
+
+## 9. Run Deterministic Downscaling With Ground Truth Correction
 
 Ground-truth correction uses station observations to build a smooth multiplicative correction field. The correction modifies the dynamic weights, and the conservative allocation is then rerun.
 
@@ -369,7 +391,7 @@ corr
 
 Interpret these metrics as station agreement diagnostics, not as proof of physical truth. Station measurements are often near-surface observations, while satellite fields may represent column quantities or model-layer values.
 
-## 9. Run AI Downscaling With Ground Truth Correction
+## 10. Run AI Downscaling With Ground Truth Correction
 
 The AI run uses the same ground-truth correction workflow:
 
@@ -399,7 +421,7 @@ Use the deterministic and AI station reports to compare:
 - correction-field magnitude and spatial distribution;
 - conservation behavior before and after deblocking.
 
-## 10. Run With Default Deblocking
+## 11. Run With Default Deblocking
 
 By default, SmokEye applies two regularization steps to reduce visible coarse-pixel boundaries:
 
@@ -454,7 +476,7 @@ python downscale_pollutant.py \
 
 Use this pattern when `GEO.DAT` terrain or land-use diagnostics are already north-to-south in raster row order, while CALMET gridded records still need the default lower-origin flip. Keep `--validate` enabled so the output reports both the exact conservative allocation and the final deblocked, normalized raster.
 
-## 11. Run Without Deblocking For Allocation-Only Review
+## 12. Run Without Deblocking For Allocation-Only Review
 
 For scientific comparison of the conservative allocation stage without visual regularization, disable seamless recomposition and final deblocking:
 
@@ -530,7 +552,7 @@ python downscale_pollutant.py --method ai \
 
 These allocation-only runs are useful for regression tests and method comparison. The default deblocked runs are usually more suitable for visualization while remaining conservation-normalized.
 
-## 12. Extract Quality Metrics From Station Reports
+## 13. Extract Quality Metrics From Station Reports
 
 Station reports are JSON files. The following Python snippet extracts station metrics, conservation metrics, and the estimated average ground-level background value:
 

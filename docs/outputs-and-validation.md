@@ -1,6 +1,6 @@
 # Outputs, Reports, And Validation
 
-Both downscaling methods write the same categories of output.
+All downscaling methods write the same categories of output. This common output contract supports direct comparison among deterministic, AI, and diffusion runs, provided that the same input raster, target grid, meteorological time selection, units, and regularization settings are used.
 
 ## Main GeoTIFF
 
@@ -25,7 +25,7 @@ Use:
 
 This writes the final dynamic weight field. If station correction is used, this is the corrected weight field.
 
-Compare deterministic and AI weight rasters to understand where the two methods differ before allocation.
+Compare deterministic, AI, and diffusion diagnostic rasters to understand where the methods differ before final validation. For deterministic and AI runs, the weight raster shows the allocation surface directly; for diffusion runs, pair the weight raster with uncertainty or ensemble outputs when those diagnostics are written.
 
 The weight raster is also the primary diagnostic for array-orientation problems. For deterministic runs, a vertically mirrored high-resolution pattern usually points to `--geodat-array-origin` or `--calmet-array-origin`. Run a strict diagnostic output with:
 
@@ -103,7 +103,7 @@ rmse
 corr
 ```
 
-Use these metrics to compare station agreement, but interpret them carefully when station values are near-surface measurements and the raster is a satellite column or model-layer product.
+Use these metrics to compare station agreement, but interpret them carefully when station values are near-surface measurements and the raster is a satellite column or model-layer product. For publication-quality validation, reserve independent station records for testing whenever station observations have also been used for calibration or correction.
 
 ## Seamless And Deblocking Options
 

@@ -1,6 +1,6 @@
 # Input Data Requirements
 
-Both downscaling methods use the same input files and command-line interface.
+All downscaling methods use the same input files and command-line interface.
 
 ## Positional Inputs
 

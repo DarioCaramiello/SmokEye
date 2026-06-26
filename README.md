@@ -1,12 +1,12 @@
 # SmokEye Pollutant Downscaler
 
-SmokEye provides one command with three comparable workflows for downscaling a gridded pollutant raster to the grid defined by a CALMET `GEO.DAT` file:
+SmokEye provides one command with three comparable workflows for downscaling a gridded pollutant raster to the grid defined by a CALMET `GEO.DAT` file. The package is designed for reproducible scientific comparison: all methods share the same grid readers, temporal selection rules, conservative allocation engine, station-correction workflow, validation reports, and raster writers.
 
 - `python downscale_pollutant.py --method deterministic`: deterministic dynamic downscaling with conservative allocation.
 - `python downscale_pollutant.py --method ai`: AI-based dynamic downscaling with the same input interface and the same output products.
 - `python downscale_pollutant.py --method diffusion`: conservation-guided residual diffusion downscaling with hard coarse-to-fine normalization.
 
-All methods read the same pollutant raster, CALMET/CMET meteorology, `GEO.DAT` target grid, and optional station CSV. They write a single-band GeoTIFF aligned to the `GEO.DAT` grid, plus optional diagnostic rasters and JSON reports. This makes the methods suitable for direct side-by-side comparison.
+All methods read the same pollutant raster, CALMET/CMET meteorology, `GEO.DAT` target grid, and optional station CSV. They write a single-band GeoTIFF aligned to the `GEO.DAT` grid, plus optional diagnostic rasters and JSON reports. This makes the methods suitable for direct side-by-side comparison under fixed assumptions about time, units, coordinate reference system, array orientation, and conservation.
 
 Downscaling enforces timestamp consistency between the pollutant raster and weather data. SmokEye uses explicit `--satellite-time-start/--satellite-time-end` values or common GeoTIFF time metadata, then selects the closest CALMET records using the file timestamp encoding. `--calmet-stamp-format auto` infers either `YYYYMMDDHH` stamps such as `2024062811` or CALMET/CMET `YYYYJJJHHH` stamps such as `202418011`; override it when a producer documents a specific encoding. The satellite time parameters are ISO datetimes such as `2024-06-28T11:00:00`, `2024-06-28T11:00:00Z`, or `2024-06-28T13:00:00+02:00`; timezone-aware values are converted to UTC before use. Start and end must be supplied together, and the end must be after the start unless an instant timestamp is intentionally expanded with `--satellite-instant-duration-minutes`. Untimed pollutant rasters require `--allow-untimed-satellite`.
 

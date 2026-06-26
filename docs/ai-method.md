@@ -59,7 +59,7 @@ python downscale_pollutant.py --method ai \
   --write-correction output/ai_correction.tif
 ```
 
-During execution, the AI method prints a short model summary like:
+During execution, the AI method logs a short model summary like:
 
 ```text
 AI weight model: features=22 hidden=88 training_cells=10000
@@ -83,5 +83,5 @@ ai_model=deterministic_extreme_learning_machine_ridge
 ## Limitations
 
 - The current model is not trained on an independent historical dataset.
-- Because the teacher field is derived from the deterministic model, the AI method is best interpreted as an alternate model-family sensitivity test, not proof of higher physical accuracy.
+- Because the teacher field is derived from the deterministic model, the AI method is best interpreted as an alternate model-family sensitivity test, not as evidence of higher physical accuracy by itself.
 - For a fully supervised AI downscaler, replace or extend the training signal with historical high-resolution analyses, emissions inventory data, station networks, or chemistry-transport model outputs.

@@ -2,7 +2,7 @@
 
 ## Abstract
 
-This document defines a validation strategy for demonstrating whether CALPUFF is working well when its native output is available only in arbitrary model units and when NO2, CO, and PM10 are available from both satellite products and air-quality stations. The proposed strategy treats CALPUFF as a spatial-temporal dispersion predictor whose arbitrary values must first be calibrated against independent near-surface observations. Downscaled satellite products are then used primarily to test spatial structure, plume placement, hotspot behavior, and episode consistency on the CALMET/SmokEye grid. The strategy is designed for integration with SmokEye, whose workflows downscale satellite pollutant rasters to the `GEO.DAT` grid, enforce coarse-to-fine conservation, validate against stations, and compare prepared CALPUFF rasters with satellite or downscaled reference rasters.
+This document defines a validation strategy for assessing CALPUFF performance when native model output is available only in arbitrary units and when NO2, CO, and PM10 observations are available from satellite products and air-quality stations. The strategy treats CALPUFF as a spatio-temporal dispersion predictor whose arbitrary values must be transformed to physical concentration units before quantitative interpretation. Independent near-surface station observations provide the primary calibration and validation reference; SmokEye-downscaled satellite products provide complementary evidence about spatial structure, plume placement, hotspot behavior, and episode consistency on the CALMET grid. The protocol is designed for integration with SmokEye, whose workflows downscale satellite pollutant rasters to the `GEO.DAT` grid, enforce coarse-to-fine conservation, validate against stations, and compare prepared CALPUFF rasters with satellite or downscaled reference rasters.
 
 ## 1. Scientific Problem
 
@@ -12,7 +12,7 @@ The defensible validation target is therefore:
 
 > CALPUFF is working well if its independently calibrated fields reproduce observed near-surface concentrations at withheld stations and reproduce the independent spatial patterns of downscaled satellite fields under documented time, unit, background, and representativeness assumptions.
 
-This is a stronger and more defensible claim than saying that CALPUFF visually resembles a satellite map.
+This is a stronger claim than visual resemblance to a satellite map. It requires independent predictive skill, documented calibration, and explicit treatment of temporal alignment, unit conversion, background concentration, and observation representativeness.
 
 ## 2. SmokEye Context
 
@@ -22,7 +22,7 @@ SmokEye provides three components that are directly relevant:
 2. `prepare_calpuff.py` reads gridded CALPUFF-style outputs, selects pollutant, source group, level, and time window, and applies explicit scale, offset, and background parameters.
 3. `compare_calpuff_satellite.py` compares prepared CALPUFF and reference rasters pixel by pixel and writes difference, ratio, JSON, and CSV diagnostics.
 
-The validation action proposed here adds a fourth layer: **station-based calibration and holdout validation** of CALPUFF arbitrary units before the CALPUFF-to-satellite comparison is interpreted.
+The validation action proposed here adds a fourth layer: **station-based calibration and holdout validation** of CALPUFF arbitrary units before the CALPUFF-to-satellite comparison is interpreted. This ordering prevents spatial-pattern agreement from being mistaken for quantitative concentration accuracy.
 
 ## 3. Guiding Principles
 
@@ -36,6 +36,8 @@ Recommended validation splits are:
 - **time-based split**: train on some days or episodes, validate on different days or episodes;
 - **episode-based split**: fit on a subset of meteorological or emission episodes and validate on independent episodes;
 - **blocked space-time split**: withhold station groups and time windows together to avoid optimistic estimates caused by spatial and temporal autocorrelation.
+
+The selected split must be recorded in machine-readable outputs. When the station network is small, report split sensitivity rather than presenting one favorable split as definitive evidence.
 
 ### 3.2 Use stations as the primary physical-unit reference
 
@@ -58,6 +60,12 @@ Every validation run must report:
 - station split used for calibration and validation;
 - interpretation caveats.
 
+The report should also preserve the CALMET stamp-selection rule, satellite validity window, array-origin settings, CRS, grid transform, nodata treatment, and coarse-to-fine conservation diagnostics. These details are not bookkeeping: they determine whether two fields are physically comparable.
+
+### 3.5 Use conservative products as the default evidence
+
+SmokEye's standard downscaled outputs are conservation-enforced: the fine grid aggregates back to the original coarse pollutant values. This invariant should be retained for validation unless a deliberately non-conservative diagnostic mode is documented. Relaxed-conservation products can be useful for visualization or sensitivity analysis, but they should not be used as primary validation evidence without reporting the relaxation parameter and resulting conservation error.
+
 ## 4. Recommended Statistical Model
 
 Let \(M_p(x,t)\) be the raw CALPUFF model-unit value for pollutant \(p\), and let \(C_p(x,t)\) be the target concentration in the validation unit.
@@ -74,13 +82,15 @@ where:
 - \(b_p\) is an optional fitted offset;
 - \(B_p(x,t)\) is a known or estimated background concentration field.
 
-For the first operational SmokeEye implementation, a robust and auditable default is:
+For the first operational SmokEye implementation, a robust and auditable default is:
 
 \[
 \hat{C}_p(x,t) = a_p M_p(x,t) + B_p,
 \]
 
 with a fixed scalar background \(B_p\) and scale \(a_p\) fitted through the origin after background subtraction. This avoids overfitting when the number of stations is small. A fitted offset should be enabled only when there are enough independent stations and episodes.
+
+The calibration model should be estimated separately by pollutant and, where scientifically justified, by season, source regime, or meteorological regime. A single pooled scale is acceptable only if residual diagnostics show that the relationship is stable across the included episodes.
 
 ## 5. Pollutant-Specific Strategy
 
@@ -152,6 +162,8 @@ python downscale_pollutant.py \
 
 The purpose is to establish that the downscaled satellite field is a credible reference product before using it to diagnose CALPUFF.
 
+For diffusion-assisted downscaling, also record the checkpoint identifier, training strategy, inference seed, sample count, and uncertainty or ensemble outputs. These fields are part of the reference-product provenance.
+
 ### Step 3: Prepare CALPUFF outputs
 
 Use SmokEye's CALPUFF preparation workflow to select the relevant species, group, level, and time. If the scale is not yet known, prepare or export a raw model-unit raster for station calibration. After calibration, rerun preparation or apply the calibrated scale/background explicitly.
@@ -184,7 +196,7 @@ Fit the scale and optional offset only on training stations/times:
 a_p = \arg\min_a \sum_{i \in train} \left[C_i - B_p - a M_i\right]^2.
 \]
 
-Then evaluate on withheld stations/times. The new `smokeye-validation.py` entry point implements this station calibration and holdout validation.
+Then evaluate on withheld stations/times. The `smokeye-validation.py` entry point implements this station calibration and holdout validation; external analyses should reproduce the same split, calibration formula, and metrics in a version-controlled script.
 
 ### Step 5: Evaluate station holdout skill
 
@@ -198,6 +210,8 @@ Report at least:
 - sensitivity to station split if the network is small.
 
 A successful result should show skill on withheld stations, not only a good fit at training stations.
+
+Report uncertainty around performance estimates when possible. For small station networks, bootstrap confidence intervals, leave-one-station-out diagnostics, or repeated blocked splits are more informative than a single point estimate.
 
 ### Step 6: Evaluate satellite spatial-pattern skill
 
@@ -228,6 +242,8 @@ The final evidence should be a table across pollutant, episode, and validation s
 | CO | Regional transport/background tracer | stable scale and broad spatial/temporal agreement |
 | PM10 | Particle-event diagnostic | station skill plus event/hotspot agreement |
 
+Include weak and failed episodes in the table. Excluding difficult cases after inspection biases the reported skill and undermines reproducibility.
+
 ## 7. Minimum Acceptance Criteria
 
 The following criteria are recommended before claiming that CALPUFF is working well:
@@ -239,25 +255,10 @@ The following criteria are recommended before claiming that CALPUFF is working w
 5. Hotspot detection has acceptable recall without excessive false alarms.
 6. Results remain interpretable after stratifying by wind sector, stability, and time of day.
 7. All failed or weak episodes are retained and explained rather than removed.
+8. Time windows, units, CRS, raster transforms, nodata handling, and array-origin settings are explicitly documented.
+9. SmokEye conservation validation is near numerical precision for primary downscaled reference products, unless a non-conservative diagnostic mode is clearly labeled.
 
-## 8. Recommended Repository Integration
-
-Add the new script at repository root:
-
-```text
-SmokEye/
-├── smokeye-validation.py
-├── smokeye-validation-strategy.md
-├── smokeye-validation-guide.md
-├── downscale_pollutant.py
-├── prepare_calpuff.py
-├── compare_calpuff_satellite.py
-└── smokeye/
-```
-
-Later, the script can be refactored into `smokeye/validation.py` and exposed through `smokeye.cli`, following the existing repository pattern in which top-level scripts are thin wrappers around package functions.
-
-## 9. Interpretation Statement for Publications
+## 8. Interpretation Statement for Publications
 
 A suitable publication-quality statement is:
 

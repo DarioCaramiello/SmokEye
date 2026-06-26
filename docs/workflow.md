@@ -1,11 +1,12 @@
 # Workflow Overview
 
-SmokEye downscales a coarse pollutant raster to a CALMET `GEO.DAT` grid. It provides two methods with the same operational shape:
+SmokEye downscales a coarse pollutant raster to a CALMET `GEO.DAT` grid. It provides three methods with the same operational contract:
 
 - Deterministic method: explicit rule-based dynamic weights.
 - AI method: deterministic machine-learning dynamic weights.
+- Diffusion method: checkpoint-driven residual structure with conservation-guided normalization.
 
-Both methods use the same conservative allocation engine after the weight field is built.
+All methods use the same conservative allocation engine after the method-specific fine-grid structure or weight field is built. This shared contract is central to scientific comparability: differences among outputs should be attributable to the documented method strategy, not to divergent I/O, station correction, validation, or raster-writing code paths.
 
 ## Implementation Layout
 
@@ -13,10 +14,11 @@ The top-level scripts are compatibility entry points:
 
 - `downscale_pollutant.py` defaults to the shared deterministic workflow.
 - `downscale_pollutant.py --method ai` calls the shared workflow with the AI weight builder.
+- `downscale_pollutant.py --method diffusion` calls the shared workflow and then applies checkpoint-driven residual generation before final conservation normalization.
 - `prepare_calpuff.py` prepares CALPUFF outputs as satellite-aligned rasters with explicit time and unit handling.
 - `compare_calpuff_satellite.py` compares the prepared CALPUFF and satellite/reference rasters.
 
-Unified method dispatch lives in `smokeye/cli.py`. Shared readers, allocation, station correction, validation, deblocking, and raster writers live in `smokeye/downscaler.py`. CALPUFF preparation and prepared-raster statistics live in `smokeye/comparison.py`. The AI-only weight strategy lives in `smokeye/ai_downscaler.py`. This keeps method differences explicit while avoiding duplicate source code.
+Unified method dispatch lives in `smokeye/cli.py`. Shared readers, allocation, station correction, validation, deblocking, and raster writers live in `smokeye/downscaler.py`. CALPUFF preparation and prepared-raster statistics live in `smokeye/comparison.py`. Method-specific strategies live in small modules such as `smokeye/ai_downscaler.py` and `smokeye/diffusion_downscaler.py`. This keeps scientific differences explicit while avoiding duplicate source code.
 
 ## Processing Stages
 
@@ -71,7 +73,7 @@ The command accepts the same positional arguments for both methods:
 input_tif calmet_dat geodat output_tif
 ```
 
-Both methods also accept the same flags for pollutant selection, station correction, validation, deblocking, diagnostics, and inspection modes. This is deliberate: a deterministic run and an AI run can be produced by changing only `--method` and output paths.
+All methods accept the same common flags for pollutant selection, station correction, validation, deblocking, diagnostics, and inspection modes. This is deliberate: deterministic, AI, and diffusion runs can be compared by changing only the method-specific options and output paths.
 
 ## Conservation Behavior
 
@@ -87,3 +89,5 @@ Both statistics should remain near numerical precision for valid overlapping sou
 Use the deterministic method when you want a transparent rule-based baseline. It is easier to audit because each modifier is explicit.
 
 Use the AI method when you want a second model family for sensitivity analysis. It uses the same input data and output contract, but the fine-grid weight surface is produced by a compact nonlinear model.
+
+Use the diffusion method when you have an explicit checkpoint and want to test conservation-guided residual fine-scale structure. Treat diffusion outputs as model-assisted realizations whose scientific credibility depends on the training strategy, checkpoint provenance, ensemble diagnostics, and the final coarse-to-fine conservation report.
