@@ -38,6 +38,8 @@ Each SmokEye command represents one pollutant analysis time or one pre-aggregate
 - station measurements should be prefiltered or pre-aggregated to the same time basis before they are passed with `--groundtruth-csv`;
 - NPZ meteorology files are treated as already time-selected arrays on the `GEO.DAT` grid.
 
+`--satellite-time-start` and `--satellite-time-end` accept ISO datetime strings such as `2024-06-28T11:00:00`, `2024-06-28 11:00:00`, `2024-06-28T11:00:00Z`, or `2024-06-28T13:00:00+02:00`. If a timezone is supplied, SmokEye converts the value to UTC before dropping timezone information internally. The two values must be provided together; the end must be greater than the start, except that equal start/end values may represent an instant and can be expanded with `--satellite-instant-duration-minutes`.
+
 For CALMET/CMET binary inputs, SmokEye reads all supported records for each meteorological field label and then chooses one array per field:
 
 - `--calmet-selector mean` uses the cellwise mean across all supported records for each field;

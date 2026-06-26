@@ -144,6 +144,8 @@ SmokEye treats each command as one analysis time or one pre-aggregated time wind
 - prefilter or average station data to the same period before writing the ground-truth CSV;
 - use an `.npz` meteorology file only after its arrays have already been time-selected or time-averaged.
 
+The `--satellite-time-start` and `--satellite-time-end` values are ISO datetimes, for example `2024-06-28T11:00:00`, `2024-06-28 11:00:00`, `2024-06-28T11:00:00Z`, or `2024-06-28T13:00:00+02:00`. Timezone-aware values are converted to UTC before comparison and diagnostics. Start and end must be supplied together, and the end must be after the start unless both are the same instant and `--satellite-instant-duration-minutes` is used to expand that instant into a centered validity window.
+
 For CALMET/CMET binary files, the time behavior is controlled by:
 
 ```bash

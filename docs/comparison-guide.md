@@ -29,6 +29,8 @@ Comparison defaults assume both products are in micrograms per cubic meter (`ug_
 
 By default, SmokEye fails if the CALPUFF comparison window and reference validity window do not overlap by at least `--min-time-overlap-fraction`. Use `--time-overlap-policy warn` only for documented diagnostics. Use `--allow-untimed-satellite` only when the missing reference time is an explicit, documented assumption. CALPUFF record selection defaults to `--time-selection closest`: overlapping records are preferred, and if none overlap the requested window the nearest available record is selected by midpoint timestamp with file-order tie-breaking. `--max-closest-time-delta-minutes` limits how far that nearest CALPUFF record may be from the requested window. That closest-time decision is written to the JSON report so the comparison remains timestamp consistent and reproducible.
 
+The reference `--satellite-time-start` and `--satellite-time-end` parameters use the same ISO datetime formats as downscaling, including timezone-aware values such as `2025-02-25T07:00:00Z` or `2025-02-25T08:00:00+01:00`. Provide both values together; timezone-aware inputs are converted to UTC before the overlap check.
+
 Scientific caveats: grid alignment does not make products physically equivalent, satellite columns and near-surface model concentrations need explicit physics/unit conversion, background levels must come from measurements or documented assumptions, temporal mismatch can dominate differences, and deposition outputs should not be compared to concentration or column products without explicit conversion.
 
 ## 1. Prepare The Environment
